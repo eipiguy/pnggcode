@@ -1,13 +1,66 @@
 import numpy as np
 from PIL import Image
 
+class ColorGroup:
+	def __init__( self, rgb_list ):
+		pass
+
 class ColorTree:
-	def __init__( self, rgb_color_list ):
-		self.rgb_color_list = rgb_color_list
-		self.binary_tree = self.map_connections()
+	def __init__( self, rgb_list ):
+		self.rgb_list = rgb_list
+		self.nearest_neighbor_tree = self.map_connections()
 
 	def map_connections( self ):
-		pass
+		# lower triangular matrix of distances
+		pairwise_distsq = find_pairwise_distsq( self.rgb_list )
+
+		# sort by distance
+		nearest_neighbors = sorted( pairwise_distsq, key=pairwise_distsq.get )
+
+		print(nearest_neighbors)
+
+		# build nearest neighbor binary tree
+		group_numbers = [ list( range( len( self.rgb_list ) ) ) ]
+
+		for pair in nearest_neighbors:
+			cur_groups = group_numbers[-1]
+			if len( set( cur_groups ) ) <= 1:
+				break
+			if cur_groups[ pair[0] ] == cur_groups[ pair[1] ]:
+				continue
+			new_group_numbers = [ cur_groups[ pair[0] ] if group == cur_groups[ pair[1] ] else group for group in cur_groups ]
+			group_numbers.append( new_group_numbers )
+			print( new_group_numbers )
+
+def min_distsq( nested_left, nested_right, dist_dict ):
+	min = np.inf
+	for l_item in nested_left:
+		if isinstance( l_item, list ):
+			dist = min_distsq( l_item, nested_right )
+			if dist < min:
+				min = dist
+		else:
+			for r_item in nested_right:
+				if isinstance( r_item, list ):
+					dist = min_distsq( l_item, r_item )
+				else:
+					dist = dist_dict[(l_item,r_item)]
+				if dist < min:
+					min = dist
+	return min
+
+def find_pairwise_distsq( rgb_list ):
+	pairwise_dict = {}
+
+	# pairwise distances
+	for i,first in enumerate( rgb_list ):
+		for j,compare in enumerate( rgb_list[i+1:] ):
+			pairwise_dict[(i,i+j+1)] = distsq( first, compare )
+
+	return pairwise_dict
+
+def distsq( tuple_l, tuple_r ):
+	return sum( [ ( max((lhs, tuple_r[i]) - min(lhs, tuple_r[i]) ))**2 for i, lhs in enumerate( tuple_l ) ] )
 
 def grey_triple_255( val ):
 	return ( val, val, val )

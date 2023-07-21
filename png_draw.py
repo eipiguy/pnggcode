@@ -9,7 +9,9 @@ class NImage:
 		self.pil_image.save( file_path )
 
 	def draw_rgb_array( self, rgb_array ):
-		self.pil_image = Image.fromarray( np.array( rgb_array ), 'RGB' )
+		np_array = np.uint8( rgb_array )
+		#np_array_transpose = np_array.transpose(1,2,0)
+		self.pil_image = Image.fromarray( np_array, 'RGB' )
 
 def compare_pngs( left_png_path, right_png_path ):
 	left_png = Image.open(left_png_path)

@@ -103,7 +103,7 @@ class TestColorTree( unittest.TestCase ):
 		test_color_tree = ColorTree( test_colors )
 
 		# check against baseline
-		self.assertTrue( compare_nested_lists( test_color_tree.binary_tree, baseline_color_tree ) )
+		self.assertTrue( compare_nested_lists( test_color_tree.nearest_neighbor_tree, baseline_color_tree ) )
 
 if __name__ == "__main__":
 	unittest.main( )
