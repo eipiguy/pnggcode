@@ -31,3 +31,5 @@ def compare_pngs( left_png_path, right_png_path ):
 				return False
 
 	return True
+
+def reduce_colors( rgb_array, max_colors )

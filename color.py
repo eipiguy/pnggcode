@@ -8,9 +8,9 @@ class ColorGroup:
 class ColorTree:
 	def __init__( self, rgb_list ):
 		self.rgb_list = rgb_list
-		self.nearest_neighbor_tree = self.map_connections()
+		color_groups = self.group_colors()
 
-	def map_connections( self ):
+	def group_colors( self ):
 		# lower triangular matrix of distances
 		pairwise_distsq = find_pairwise_distsq( self.rgb_list )
 
@@ -20,17 +20,28 @@ class ColorTree:
 		print(nearest_neighbors)
 
 		# build nearest neighbor binary tree
-		group_numbers = [ list( range( len( self.rgb_list ) ) ) ]
+		num_final_colors = 16
+		group_ids = get_nearest_neighbor_groups( len( self.rgb_list ), nearest_neighbors, num_final_colors )
+		return group_ids
 
-		for pair in nearest_neighbors:
-			cur_groups = group_numbers[-1]
-			if len( set( cur_groups ) ) <= 1:
-				break
-			if cur_groups[ pair[0] ] == cur_groups[ pair[1] ]:
-				continue
-			new_group_numbers = [ cur_groups[ pair[0] ] if group == cur_groups[ pair[1] ] else group for group in cur_groups ]
-			group_numbers.append( new_group_numbers )
-			print( new_group_numbers )
+def get_nearest_neighbor_groups( num_elements, sorted_pair_list, desired_groups ):
+	num_groups = num_elements
+	group_numbers = [ list( range( num_elements ) ) ]
+	unlinked_colors = [ True ]
+
+	for pair in sorted_pair_list:
+		if num_groups <= desired_groups:
+			break
+		cur_groups = group_numbers[-1]
+		if len( set( cur_groups ) ) <= 1:
+			break
+		if cur_groups[ pair[0] ] == cur_groups[ pair[1] ]:
+			continue
+		new_group_numbers = [ cur_groups[ pair[0] ] if group == cur_groups[ pair[1] ] else group for group in cur_groups ]
+		group_numbers.append( new_group_numbers )
+		num_groups -= 1
+		print( new_group_numbers )
+	return group_numbers[-1]
 
 def min_distsq( nested_left, nested_right, dist_dict ):
 	min = np.inf
