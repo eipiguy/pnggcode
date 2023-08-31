@@ -17,31 +17,50 @@ class ColorTree:
 		# sort by distance
 		nearest_neighbors = sorted( pairwise_distsq, key=pairwise_distsq.get )
 
-		print(nearest_neighbors)
+		self.nearest_neighbor_tree = agglomerate_tree_from_pairs( len(self.rgb_list), nearest_neighbors )
+	
+	def get_tree():
+		# use the nested tree of color indices
+		# to make a nested tree of color values
+		pass
 
-		# build nearest neighbor binary tree
-		num_final_colors = 16
-		group_ids = get_nearest_neighbor_groups( len( self.rgb_list ), nearest_neighbors, num_final_colors )
-		return group_ids
+def agglomerate_tree_from_pairs( num_elements, sorted_neighbor_pairs ):
+	if num_elements == 0:
+		return None
+	if num_elements == 1:
+		return 0
 
-def get_nearest_neighbor_groups( num_elements, sorted_pair_list, desired_groups ):
+	group_numbers = list( range( num_elements ) )
+	groups = list( range( num_elements ) )
 	num_groups = num_elements
-	group_numbers = [ list( range( num_elements ) ) ]
-	unlinked_colors = [ True ]
+	min_id = 0
 
-	for pair in sorted_pair_list:
-		if num_groups <= desired_groups:
+	# all possible pairs in order of distance
+	for pair in sorted_neighbor_pairs:
+		
+		# need to stop once we have a single group
+		if num_groups < 1:
 			break
-		cur_groups = group_numbers[-1]
-		if len( set( cur_groups ) ) <= 1:
-			break
-		if cur_groups[ pair[0] ] == cur_groups[ pair[1] ]:
+
+		pair_group_numbers = [ group_numbers[ pair[0] ], group_numbers[ pair[1] ] ]
+		min_id = min( pair_group_numbers )
+		max_id = max( pair_group_numbers )
+		if min_id == max_id:
 			continue
-		new_group_numbers = [ cur_groups[ pair[0] ] if group == cur_groups[ pair[1] ] else group for group in cur_groups ]
-		group_numbers.append( new_group_numbers )
+
+		# always use the lower id as the parent for consistency
+		#parent_id = pair[0] if pair_group_numbers[0] <= pair_group_numbers[1] else pair[1]
+		
+		# The parent group becomes itself paired with next closest group
+		groups[ min_id ] = [ groups[ min_id ], groups[ max_id ] ]
+
+		# rewrite all associated group numbers
+		for i in range(len(group_numbers)):
+			if group_numbers[i] == max_id:
+				group_numbers[i] = min_id
+
 		num_groups -= 1
-		print( new_group_numbers )
-	return group_numbers[-1]
+	return groups[min_id]
 
 def min_distsq( nested_left, nested_right, dist_dict ):
 	min = np.inf

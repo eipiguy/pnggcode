@@ -68,6 +68,30 @@ class TestColorTree( unittest.TestCase ):
 	def get_image( self, file_name, file_extension = 'png' ):
 		return path.join( self.test_dir, file_name + '.' + file_extension )
 
+	def test_basic_functionality(self):
+		self.assertEqual(
+			agglomerate_tree_from_pairs(3, [(0, 1), (1, 2)]),
+			[[0, 1], 2]
+		)
+
+	def test_empty_input_list(self):
+		self.assertEqual(
+			agglomerate_tree_from_pairs(3, []),
+			0
+		)
+
+	def test_non_unique_nearest_neighbors(self):
+		self.assertEqual(
+			agglomerate_tree_from_pairs(3, [(0, 1), (0, 1), (1, 2)]),
+			[[0, 1], 2]
+		)
+
+	def test_single_element(self):
+		self.assertEqual(
+			agglomerate_tree_from_pairs(1, []),
+			0
+		)
+
 	def test_map_color_connections( self ):
 
 		blue_75 = ( 0, 0, 75 )
@@ -103,7 +127,7 @@ class TestColorTree( unittest.TestCase ):
 		test_color_tree = ColorTree( test_colors )
 
 		# check against baseline
-		self.assertTrue( compare_nested_lists( test_color_tree.nearest_neighbor_tree, baseline_color_tree ) )
+		self.assertTrue( compare_nested_lists( test_color_tree.get_tree(), baseline_color_tree ) )
 
 if __name__ == "__main__":
 	unittest.main( )
