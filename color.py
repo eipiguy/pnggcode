@@ -1,14 +1,11 @@
 import numpy as np
 from PIL import Image
-
-class ColorGroup:
-	def __init__( self, rgb_list ):
-		pass
+from collections import defaultdict
 
 class ColorTree:
-	def __init__( self, rgb_list ):
-		self.rgb_list = rgb_list
-		color_groups = self.group_colors()
+	def __init__( self, color_set ):
+		self.rgb_list = list(color_set)
+		self.nearest_neighbor_tree = self.group_colors()
 
 	def group_colors( self ):
 		# lower triangular matrix of distances
@@ -17,12 +14,12 @@ class ColorTree:
 		# sort by distance
 		nearest_neighbors = sorted( pairwise_distsq, key=pairwise_distsq.get )
 
-		self.nearest_neighbor_tree = agglomerate_tree_from_pairs( len(self.rgb_list), nearest_neighbors )
+		return agglomerate_tree_from_pairs( len(self.rgb_list), nearest_neighbors )
 	
-	def get_tree():
+	def get_tree( self ):
 		# use the nested tree of color indices
 		# to make a nested tree of color values
-		pass
+		return populate_tree_with_values( self.nearest_neighbor_tree, self.rgb_list )
 
 def agglomerate_tree_from_pairs( num_elements, sorted_neighbor_pairs ):
 	if num_elements == 0:
@@ -47,9 +44,6 @@ def agglomerate_tree_from_pairs( num_elements, sorted_neighbor_pairs ):
 		max_id = max( pair_group_numbers )
 		if min_id == max_id:
 			continue
-
-		# always use the lower id as the parent for consistency
-		#parent_id = pair[0] if pair_group_numbers[0] <= pair_group_numbers[1] else pair[1]
 		
 		# The parent group becomes itself paired with next closest group
 		groups[ min_id ] = [ groups[ min_id ], groups[ max_id ] ]
@@ -61,6 +55,34 @@ def agglomerate_tree_from_pairs( num_elements, sorted_neighbor_pairs ):
 
 		num_groups -= 1
 	return groups[min_id]
+
+
+def populate_tree_with_values( tree, value_array ):
+	if tree is None:
+		return None
+
+	stack = [(tree, None, None)]
+	root = None
+
+	while stack:
+		current_tree, parent, idx = stack.pop()
+		
+		if isinstance(current_tree, int):
+			value = value_array[current_tree]
+		elif isinstance(current_tree, list):
+			value = [None] * len(current_tree)
+			for i, subtree in reversed(list(enumerate(current_tree))):
+				stack.append((subtree, value, i))
+		else:
+			raise ValueError("Invalid tree node type")
+
+		if parent is not None:
+			parent[idx] = value
+		else:
+			root = value
+
+	return root
+
 
 def min_distsq( nested_left, nested_right, dist_dict ):
 	min = np.inf
@@ -104,22 +126,54 @@ def get_colors( image_path ):
 	image_array_rasterized = image_array.reshape( -1, image_array.shape[2] )
 
 	# take RGBa colors and remove the alpha
-	rgb_array = [ rgba[:3] for rgba in image_array_rasterized ]
+	colors = set([ tuple(rgba[:3]) for rgba in image_array_rasterized ])
+	return colors
 
-	colors, color_counts = np.unique( rgb_array, return_counts = True, axis = 0 )
-	return colors, color_counts
+def convert_element_recursive(elem):
+	if isinstance(elem, np.ndarray):
+		return elem.tolist()
+	if isinstance(elem, np.integer):
+		return int(elem)
+	if isinstance(elem, tuple):
+		return tuple(convert_element_recursive(e) for e in elem)
+	if isinstance(elem, list):
+		return [convert_element_recursive(e) for e in elem]
+	return elem
 
-def compare_nested_lists( l_list, r_list ):
-	if not l_list or not r_list:
+def compare_nested_lists(lst1, lst2):
+	# Convert elements for special types recursively
+	lst1 = convert_element_recursive(lst1)
+	lst2 = convert_element_recursive(lst2)
+		
+	# Base case: Directly compare if both elements are not lists
+	if not (isinstance(lst1, list) and isinstance(lst2, list)):
+		return lst1 == lst2
+
+	# Lists are of different lengths, they can't be equal
+	if len(lst1) != len(lst2):
 		return False
-	if len( l_list ) != len( r_list ):
+	
+	# Partition by type for meaningful comparisons
+	def partition_by_type(lst):
+		partition = defaultdict(list)
+		for elem in lst:
+			partition[type(elem)].append(elem)
+		return partition
+	
+	partition1 = partition_by_type(lst1)
+	partition2 = partition_by_type(lst2)
+	
+	# Check if partitions have the same keys (i.e., types)
+	if set(partition1.keys()) != set(partition2.keys()):
 		return False
-	for i in range( len( l_list ) ):
-		if type( l_list[i] ) != type( r_list[i] ):
-			return False
-		if isinstance( l_list[i], list ):
-			if not compare_nested_lists( l_list[i],  r_list[i] ):
+	
+	# Sort each type partition and compare recursively
+	for typ in partition1.keys():
+		sorted_partition1 = sorted(partition1[typ], key=str)
+		sorted_partition2 = sorted(partition2[typ], key=str)
+		
+		for a, b in zip(sorted_partition1, sorted_partition2):
+			if not compare_nested_lists(a, b):
 				return False
-		elif l_list[i] != r_list[i]:
-			return False
+
 	return True
