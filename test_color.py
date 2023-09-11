@@ -173,21 +173,15 @@ class TestNestedListCompare(unittest.TestCase):
 			[[(1, 2)], [(3, 5)]]
 		))
 
-	# def test_mixed_tuple_and_list(self):
-	# 	self.assertTrue(compare_nested_lists(
-	# 		[1, (2, 3)],
-	# 		[1, [2, 3]]
-	# 	))
-	
-	# def test_nested_tuple_lists(self):
-	# 	self.assertTrue(compare_nested_lists(
-	# 		[[(1, 2)], [(3, 4)]],
-	# 		[[(1, 2)], [(3, 4)]]
-	# 	))
-	# 	self.assertFalse(compare_nested_lists(
-	# 		[[(1, 2)], [(3, 4)]],
-	# 		[[(1, 2)], [(4, 3)]]
-	# 	))
+	def test_nested_tuple_lists(self):
+		self.assertTrue(compare_nested_lists(
+			[[(1, 2)], [(3, 4)]],
+			[[(1, 2)], [(3, 4)]]
+		))
+		self.assertFalse(compare_nested_lists(
+			[[(1, 2)], [(3, 4)]],
+			[[(1, 2)], [(4, 3)]]
+		))
 
 class TestPopulateTree(unittest.TestCase):
 	def test_basic_functionality(self):
