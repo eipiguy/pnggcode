@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 from collections import defaultdict
 
+
 class ColorTree:
 	def __init__( self, color_set ):
 		self.rgb_list = list(color_set)
@@ -20,6 +21,7 @@ class ColorTree:
 		# use the nested tree of color indices
 		# to make a nested tree of color values
 		return populate_tree_with_values( self.nearest_neighbor_tree, self.rgb_list )
+
 
 def agglomerate_tree_from_pairs( num_elements, sorted_neighbor_pairs ):
 	if num_elements == 0:
@@ -101,6 +103,7 @@ def min_distsq( nested_left, nested_right, dist_dict ):
 					min = dist
 	return min
 
+
 def find_pairwise_distsq( rgb_list ):
 	pairwise_dict = {}
 
@@ -111,11 +114,14 @@ def find_pairwise_distsq( rgb_list ):
 
 	return pairwise_dict
 
+
 def distsq( tuple_l, tuple_r ):
 	return sum( [ ( max((lhs, tuple_r[i]) - min(lhs, tuple_r[i]) ))**2 for i, lhs in enumerate( tuple_l ) ] )
 
+
 def grey_triple_255( val ):
 	return ( val, val, val )
+
 
 def get_colors( image_path ):
 	image = Image.open( image_path )
@@ -129,6 +135,7 @@ def get_colors( image_path ):
 	colors = set([ tuple(rgba[:3]) for rgba in image_array_rasterized ])
 	return colors
 
+
 def convert_element_recursive(elem):
 	if isinstance(elem, np.ndarray):
 		return elem.tolist()
@@ -139,6 +146,7 @@ def convert_element_recursive(elem):
 	if isinstance(elem, list):
 		return [convert_element_recursive(e) for e in elem]
 	return elem
+
 
 def compare_nested_lists(lst1, lst2):
 	# Convert elements for special types recursively
