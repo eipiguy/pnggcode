@@ -1,3 +1,8 @@
 # PNG GCode
 
-A small interface to cell-shade png images. Converts cell contours to 2D pen-plotter GCode for color-by-color plotting.
+A small image editor to cell-shade pngs. Converts cell contours, fill, and shading to 2D pen-plotter GCode for layer-by-layer plotting.
+
+## Dependencies
+
+- python
+- PyQt

@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTreeView, QHBoxLayout, QVBoxLayout, QPushButton, QFileDialog, QSizePolicy
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import Qt
-
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 import sys
 from os import path
 
@@ -16,21 +15,21 @@ class InterfaceView( QWidget ):
 
 	def initUI( self ):
 		# Widgets
-		self.label = QLabel( self )
-		self.label.setSizePolicy(
+		self.image_view = QLabel( self )
+		self.image_view.setSizePolicy(
 			QSizePolicy.Ignored,
 			QSizePolicy.Ignored
 		)
-		self.tree = QTreeView( self )
+		self.tree_view = QTreeView( self )
 		self.button = QPushButton( 'Load Image', self )
 
 		# Layouts
 		self.main_layout = QHBoxLayout()
 		self.control_layout = QVBoxLayout()
 
-		self.main_layout.addWidget( self.label, 1 )
+		self.main_layout.addWidget( self.image_view, 1 )
 		self.main_layout.addLayout( self.control_layout, 1 )
-		self.control_layout.addWidget( self.tree, 1 )
+		self.control_layout.addWidget( self.tree_view, 1 )
 		self.control_layout.addWidget( self.button, 1 )
 
 		self.setLayout( self.main_layout )
@@ -42,17 +41,18 @@ class InterfaceView( QWidget ):
 		self.current_image_path = image_path
 
 		pixmap = QPixmap( image_path )
-		self.label.setPixmap(
+		self.image_view.setPixmap(
 			pixmap.scaled(
-				self.label.size(),
+				self.image_view.size(),
 				Qt.KeepAspectRatio,
 				Qt.SmoothTransformation
 			)
 		)
+		return pixmap
 
 
 	def resizeEvent( self, event ):
-		if self.label.pixmap():
+		if self.image_view.pixmap():
 			self.set_image( self.current_image_path )
 
 
@@ -66,36 +66,37 @@ class ImagePresenter:
 
 	def model_updated(self):
 		# Update view based on model changes.
-		pass
+		self.set_tree_view( self.model.color_tree )
 
 
 	def load_image(self):
 		options = QFileDialog.Options()
-		filePath, _ = QFileDialog.getOpenFileName(
+		image_path, _ = QFileDialog.getOpenFileName(
 			self.view,
 			"QFileDialog.getOpenFileName()",
 			"",
 			"PNG Files (*.png);;All Files (*)",
 			options=options )
-		if filePath:
-			self.view.set_image( filePath )
-			self.colors = get_colors( filePath )
-			self.color_tree = ColorTree( self.colors )
-			print()
+		self.model.image = self.view.set_image( image_path )
+		self.model.process_image( image_path )
 
 
-class InterfaceModel:
+	def set_tree_view( self, color_tree ):
+		tree_view = self.view.tree
+
+
+class InterfaceModel( QAbstractItemModel ):
 	def __init__( self ):
 		self.observers = []
 
 
-	def register_observer( self, observer ):
-		self.observers.append(observer)
+	def process_image( self, path ):
+		self.colors = get_colors( path )
+		self.color_tree = ColorTree( self.colors )
 
-
-	def notify_observers( self ):
-		for observer in self.observers:
-			observer.model_updated()
+		## Move the tree information over
+		self.tree_model = TreeModel( self.color_tree )
+		self.notify_observers()
 
 
 if __name__ == "__main__":

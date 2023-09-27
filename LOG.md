@@ -1,5 +1,143 @@
 # PNG-GCode Log
 
+## 2023-09-24
+
+Ok, getting cut off at 7am is kind of par for the course. I get from when I wake up at 5ish until the kids wake up at 7 to do anything.
+
+Working on integrating the tree model into the interface model.
+
+The QTreeView structure seems to take a [QModelIndex](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QModelIndex.html)
+
+### Grok
+
+Ok. I've taken the time to read through the code GPT spit out and comment it up. I think I understand it.
+
+Integrating the color tree on the other hand is really just redoing what I've already done. Unfortunately, the algorithm is garbage, and I don't want to have to ad QWhatever to the whole thing all over again and make sure nothing breaks.
+
+This is the time to re-design a better algorithm using kd trees or an oct-tree to be more optimized.
+
+### Redesign
+
+We want to group points starting with nearest neighbors. The distance between groups is the minimum distance between the points in them.
+
+But if we start with the list of points, and ignore order, then compute distance between all of them, that takes $((n^2 - n) / 2) + n$ comparison.
+
+$$
+(n^2 - n) / 2 = n(n-1) / 2
+$$
+
+$$
+((n^2 - n) / 2) + n \\
+= (n^2 - n + 2n) / 2 \\
+= (n^2 + n) / 2 \\
+= n(n + 1) / 2
+$$
+
+Notice that $n(n-1)/2$ is always an integer, as is $n(n+1)$, since one of each pair must be even if $n$ is an integer.
+
+>This is an application of the pigeon-hole principle on a partition of the integers into equivalence classes based on a modulus of two. Ie, you split the integers into groups of two, and for each group you call one "even" and one "odd". This could have been done in groups of 3, 4, or 5, using any names for the members of the group. But prime numbers are useful, and two is the smallest, making it the first instinct and easiest to use.
+>$(n(n+1)(n+2)/3)$ is an integer for instance, because one of $n$, $(n+1)$, and $(n+2)$ must be a multiple of 3.
+>
+>This all makes me wonder why we define multiplying by one's self as "squaring" a number, and not by one's successor; even in exponentiation more generally.
+>
+>Each of these produce larger integers that seem to somehow "contain the information from the product". Why multiply by one's self, and not by one's successor and then halve? It is a well defined, invertible(?), closed operation on the integers, and seems to somehow contain only the "essential" bits from the combination... if you don't care about order. =P
+
+$n(n+1)/2$ operations to compute orderless pairwise distances in a set of size $n$, making it an $O(n^2)$ process.
+
+Apparently there is an $O(n \log n)$ way of finding the closest pairs in a set by using a KD tree, or an octree, to sort and index the points before grouping. Thus, if the merge can also be done in less than $O(n \log n)$ time, we can make this a more reasonable process than $O(n^2)$ for large collections of colors/points.
+
+>Is there a linear algorithm using like a hash-table strategy or something?
+>>Can I do two levels of commenting? ...Cool, it renders. =)
+
+### New Process
+
+Octree: separates 3d space with 3 axis-aligned planes into 8 octants
+
+We need to start with the color list, split into octants, and then repeat to sort.
+
+>Two of these with different "phased" splits on the octants may make it easier to search for the minimum between two groups, while only doubling the compute time, and therefore not increasing the order of the process. Not sure how this might work, I just like the idea.
+
+### Octree Sort
+
+```pseudo
+for each point:
+  decide what octant it's in,
+  and assign it accordingly
+
+for each octant:
+  rerun the split and sort
+  with the octant as the full space
+```
+
+I think this is the right idea, but I also know that recursion can be bad, and it's better to use a localized implementation with a for loop if possible. How is that possible in this case? How can I remove the recursion, while retaining the functionality?
+
+Let's ask GPT
+
+#### GPT on Removing Recursion
+
+You can replace recursion with an explicit stack to manage the octants that need to be processed. Here's a rough outline in pseudo-code:
+
+```pseudo
+Initialize stack with the root octant
+while stack is not empty:
+  current_octant = stack.pop()
+  
+  split current_octant into 8 sub-octants
+  
+  for each point in current_octant:
+    decide what sub-octant it's in,
+    and assign it accordingly
+  
+  for each non-empty sub-octant:
+    stack.push(sub-octant)
+```
+
+This way, you're manually managing what would be the call stack in a recursive approach.
+Critique
+
+This approach may require additional memory for the stack and the management of octants, but it avoids the pitfalls of recursion, such as stack overflow.
+
+#### Not Bad
+
+Not bad advice.
+
+```pseudo
+Make a stack of octants to sort.
+
+At each level,
+  sort all points into their respective octants,
+  then push all octants with their points onto the stack.
+
+  pop out the next octant in the stack and repeat
+```
+
+A first in-first out (FIFO) structure (like a "stack") makes this a "depth first sort". If you instead used a first in-last out structure like a queue, you would be doing the equivalent of a "breadth first sort".
+
+I also looked into using Test Driven Development, but I'm beginning to wonder how useful it really is. Do tests really enable change? It feels like it makes things harder.
+
+## 2023-09-23
+
+Ok. Left off very abruptly yesterday. Working on integrating the nested color tree with a TreeModel that's compatible with the [QTreeView](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QTreeView.html).
+
+There is a [QTreeWidget](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QTreeWidget.html) apparently, but it is a simplified version that contains the view and the model together, and apparently may not work well for large or complicated trees.
+
+So. Need to make a model that overwrites the correct functions to extend [QAbstractItemModel](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractItemModel.html) apparently.
+
+Then I take 
+
+## 2023-09-22
+
+Really trying to get this thing working. If I can just get a nice set of flat-colored cell coming out, contour mapping will look **much** nicer.
+
+Here's how I currently want things to end up:
+
+```mermaid
+graph LR
+
+TreeModel---TreeView
+TreeModel---ImageView
+```
+
 ## 2023-09-19
 
 Filled out the test skeletons from yesterday. Time to actually start the development cycle I guess? It has to kind of come in pieces around life, but I already have a lot of the core functionality, so I'm hoping this UI bit is mostly a question of aesthetics rather than implementation.
