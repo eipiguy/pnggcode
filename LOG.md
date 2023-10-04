@@ -1,5 +1,53 @@
 # PNG-GCode Log
 
+## 2023-10-02
+
+I can't seem to let this octree thing go. I have an idea where you have multiple copies for the points near the divides. One for each neighboring octant. That way you can always be assured that all points within the whole space are part of at least one neighborhood containing their nearest neighbor.
+
+This is not guaranteed in a normal octree, and while searching for a nearest neighbor to a point is faster, searching for the closest 2 points is still hard. With that change it may be more possible.
+
+That or I maintain a overlapping octrees like a mathematical "covering", with the trees overlayed to cover each other's boundaries. This again gives a neighborhood for every "nearest neighbor".
+
+## 2023-09-29
+
+I've been beating my head against this one for a while. I think I'm done for a bit. Going to go back to monotext display and the spellbook.
+
+I really want this to get done, and the octree is super interesting, but I'm not seeing a lot of little results that are giving me the boost I need. I'm switching projects for now as something else has grown more interesting by absence.
+
+>Maybe I should pay attentions to that. I need small achievable goals I can show off that will make me feel good.
+>It's silly, but I need the energy to be enthusiastic about a project, and that generally comes from novelty, but it gets stale as the results never seem to materialize quickly.
+
+One more small push on the siblings/neighbors functions in the octree.
+
+I'm not hopeful I'm going to have this done in time to make things for the holiday faire. Even if I get the cell-shading software finished, I still have to make the contour finding, and path planning algorithms. Not to mention shading/crosshatching if I want anything other than flat images.
+
+## 2023-09-27
+
+Got octree working and sufficiently tested for what I need... I think.
+
+Now I need to figure out how to use an octree for an $O(n \log n)$ nearest neighbor search.
+
+And just to think about some math for a sec:
+
+## How efficient is this really?
+
+I need to group a set of 3d points by pairs in terms of distance. That is to say the nearest 2 groups get merged at each stage.
+
+How do I most efficiently find the nearest 2 groups? Isn't that taking all unique pairs of $n$ points (of which there are $(n-1)*n/2$ making it $O(n^2)$ ), computing distances for each, and then sorting for merge order?
+
+Distances cost $O(n)$, and sorting is most often $O(n \log n)$.
+
+Isn't getting distances for *all* unique pairs the limiting factor? One a group is merged, many of the distances to other points that have also been grouped never get used.
+
+Can this process be optimized by "lazily" computing the distances that are needed on-the-fly?
+
+### Agglomerate with octree?
+
+Use a distance matrix, but don't fully fill it in?
+
+How do you find the two nearest points in an octree?
+If I keep two octrees with offset split values, does that help? That is, if two points are not in the same cluster for at least one octree, do we know they must be at least a certain distance away each other?
+
 ## 2023-09-24
 
 Ok, getting cut off at 7am is kind of par for the course. I get from when I wake up at 5ish until the kids wake up at 7 to do anything.

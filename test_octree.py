@@ -140,5 +140,124 @@ class TestOctree( unittest.TestCase ):
 		self.assertEqual( roll['111'], {(1, 1, 1)} )
 
 
+	def test_id_direction_single_lvl( self ):
+		source_id = '010'
+		dest_id = '101'
+		direction = id_direction( source_id, dest_id )
+		self.assertEqual( direction, '1,-1,1' )
+
+
+	def test_id_direction_multiple_lvls( self ):
+		source_id = '000 010 111'
+		dest_id = '111 101 000'
+		direction = id_direction( source_id, dest_id )
+		self.assertEqual( direction, '1,1,1 1,-1,1 -1,-1,-1' )
+
+
+	def test_resolve_direction( self ):
+		source_id = '000 010 111'
+		direction = '1,1,1 1,-1,1 -1,-1,-1'
+		dest_id = resolve_direction( source_id, direction )
+		self.assertEqual( dest_id, '111 101 000' )
+
+
+	def test_siblings_parent( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 1),
+				(0, 1, 0),
+				(0, 1, 1),
+				(1, 0, 0),
+				(1, 0, 1),
+				(1, 1, 0),
+				(1, 1, 1)
+			]
+		)
+		poll_id = '111' # = {( 1, 1, 1)}
+		siblings = octree.sibling_coords( poll_id )
+
+		self.assertIn( '000', siblings )
+		self.assertIn( '001', siblings )
+		self.assertIn( '010', siblings )
+		self.assertIn( '011', siblings )
+		self.assertIn( '100', siblings )
+		self.assertIn( '101', siblings )
+		self.assertIn( '110', siblings )
+
+		self.assertNotIn( '111', siblings )
+		self.assertEqual( len(siblings), 7 )
+
+
+	def test_siblings_nested( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+		poll_id = '000 111' # = {( 1, 1, 1)}
+		siblings = octree.sibling_coords( poll_id )
+		self.assertIn( '000 000', siblings )
+		self.assertNotIn( '000 111', siblings )
+		self.assertEqual( len(siblings), 1 )
+
+
+	def test_neighbors( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+		
+
+		# Without being on a boundary,
+		# there should be a 3x3x3 cube
+		# of neighbor cells minus the center,
+		# thus (9*3)-1 = 26 neighbors
+
+		# 000 ->
+		# at initial levels,
+		# you are always on a boundary
+		# so children just return siblings
+
+		# for deeper levels
+		poll_id = '000 111' # = {( 1, 1, 1)}
+		neighbors = octree.neighbor_ids( poll_id )
+
+		pass
+
+
 if __name__ == '__main__':
 	unittest.main()
