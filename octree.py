@@ -126,92 +126,106 @@ class Octree:
 
 
 	def neighbor_ids( self, cell_id ):
-		cell_coords = cell_id.split()
-		parent_coords = ' '.join( cell_coords[:-1] )
-		child_local_coords = cell_coords[-1]
 
-		# immediate siblings
-		sibling_coords = self.sibling_coords( cell_id )
+		# Point one cell at the same level
+		# in each of the 9 directions
+		neighbors = []
+		neighbor_directions = cube_directions()
 
-		# go through aunts/uncles
-		parent_siblings = self.sibling_coords( parent_coords )
-		for p_sibling_id in parent_siblings:
-			directions = id_direction( p_sibling_id, parent_coords )
-
-			# classify as edge, face, or corner
-			# (Hamming distance)
-			nonzeros = direction_nonzeros( directions )
-
-			# get associated cousins
+		# resolve each neighbor direction
+		for direction in neighbor_directions:
+			neighbor_id, remainder = resolve_direction( cell_id, direction )
+			neighbors.append( [ neighbor_id, remainder ] )
+		
+		return neighbors
 
 
+# def id_direction( source_id, dest_id ):
+# 
+# 	# input are a list of coords for each cell
+# 	source_coords = source_id.split()
+# 	dest_coords = dest_id.split()
+# 	direction_id = ''
+# 
+# 	# for now, we only compare where there is data for both
+# 	# later I may be able to give finer resolution
+# 	min_lvl = min( len(source_coords), len(dest_coords) )
+# 	for id_lvl in range(min_lvl):
+# 
+# 		# a tuple of coords for each
+# 		source_lvl_coords = source_coords[id_lvl]
+# 		dest_lvl_coords = dest_coords[id_lvl]
+# 
+# 		# directions are space delimeted tuples 
+# 		lvl_direction = '' if direction_id == '' else ' '
+# 		for i,elem in enumerate(source_lvl_coords):
+# 			# they need tuple commas
+# 			# to identify negative values
+# 			if i != 0:
+# 				lvl_direction += ','
+# 
+# 			source_val = int( source_lvl_coords[i] )
+# 			dest_val = int( dest_lvl_coords[i] )
+# 			direction_val = dest_val - source_val
+# 			lvl_direction += str( direction_val )
+# 
+# 		direction_id += lvl_direction
+# 
+# 	return direction_id
 
-		#		- 3 are face neighbors with 4 cousins each
-		#		- 3 are edge neighbors with 2 cousins each
-		#		- 1 is the opposite corner with 1 cousin
-		# Making a total of 26
-		#	- 7 immediate siblings
-		#	- 12 face cousins
-		#	- 6 edge cousins
-		#	- 1 corner cousin
-			pass
 
+def cube_directions( dimensions = 3 ):
+	alphabet = [ '-1', '0', '1' ]
+	delimeter = ','
+	cur_ids = [ '' ]
+	for d in range(dimensions):
+		# branch from all current words
+		next_ids = []
+		for id_fragment in cur_ids:
+			# add all possible tags
+			for a in alphabet:
+				prefix = id_fragment
+				if prefix != '':
+					prefix += delimeter
+				next_ids.append( prefix + a )
+		cur_ids = next_ids
 
-def id_direction( source_id, dest_id ):
-
-	# input are a list of coords for each cell
-	source_coords = source_id.split()
-	dest_coords = dest_id.split()
-	direction_id = ''
-
-	# for now, we only compare where there is data for both
-	# later I may be able to give finer resolution
-	min_lvl = min( len(source_coords), len(dest_coords) )
-	for id_lvl in range(min_lvl):
-
-		# a tuple of coords for each
-		source_lvl_coords = source_coords[id_lvl]
-		dest_lvl_coords = dest_coords[id_lvl]
-
-		# directions are space delimeted tuples 
-		lvl_direction = '' if direction_id == '' else ' '
-		for i,elem in enumerate(source_lvl_coords):
-			# they need tuple commas
-			# to identify negative values
-			if i != 0:
-				lvl_direction += ','
-
-			source_val = int( source_lvl_coords[i] )
-			dest_val = int( dest_lvl_coords[i] )
-			direction_val = dest_val - source_val
-			lvl_direction += str( direction_val )
-
-		direction_id += lvl_direction
-
-	return direction_id
+	# delete self id
+	self_id = '0,' * dimensions
+	self_id = self_id[:-1]
+	next_ids.remove( self_id )
+	return next_ids
 
 
 def resolve_direction( source, direction ):
 	source_coords = source.split()
-	directions = direction.split()
+	dimensions = len( source_coords[0] )
 
 	destination = []
-	for i,coords in enumerate(source_coords):
+	carry = [ int(x) for x in direction.split(',') ]
+	for coords in reversed(source_coords):
 
 		destination_lvl = ''
-		direction_elems = directions[i].split(',')
-
 		for j,elem in enumerate(coords):
-			result = int(elem) + int(direction_elems[j])
+
+			# compute result using previous remainder
+			result = int(elem) + carry[j]
+
+			# adjust result using new remainder
+			carry[j] = 0
 			if result < 0:
-				result = 0
-			elif result > 1:
+				carry[j] = result
 				result = 1
+			elif result > 1: # must be == 2 in this case
+				carry[j] = result - 1
+				result = 0
 			destination_lvl += str(result)
 
 		destination.append(destination_lvl)
 
-	return ' '.join(destination)
+	destination = reversed(destination)
+
+	return ' '.join(destination), ','.join([ str(r) for r in carry])
 
 
 def direction_nonzeros( direction_string ):

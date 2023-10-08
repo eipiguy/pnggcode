@@ -140,25 +140,41 @@ class TestOctree( unittest.TestCase ):
 		self.assertEqual( roll['111'], {(1, 1, 1)} )
 
 
-	def test_id_direction_single_lvl( self ):
-		source_id = '010'
-		dest_id = '101'
-		direction = id_direction( source_id, dest_id )
-		self.assertEqual( direction, '1,-1,1' )
+	def test_cube_directions( self ):
+		directions_ids = cube_directions()
+		# deleted 3x3x3 neighborhood has
+		# 27 - self = 26 members
+		self.assertEqual( len(directions_ids), 26 )
 
 
-	def test_id_direction_multiple_lvls( self ):
-		source_id = '000 010 111'
-		dest_id = '111 101 000'
-		direction = id_direction( source_id, dest_id )
-		self.assertEqual( direction, '1,1,1 1,-1,1 -1,-1,-1' )
+# 	def test_id_direction_single_lvl( self ):
+# 		source_id = '010'
+# 		dest_id = '101'
+# 		direction = id_direction( source_id, dest_id )
+# 		self.assertEqual( direction, '1,-1,1' )
+# 
+# 
+# 	def test_id_direction_multiple_lvls( self ):
+# 		source_id = '000 010 111'
+# 		dest_id = '111 101 000'
+# 		direction = id_direction( source_id, dest_id )
+# 		self.assertEqual( direction, '1,1,1 1,-1,1 -1,-1,-1' )
 
 
-	def test_resolve_direction( self ):
-		source_id = '000 010 111'
-		direction = '1,1,1 1,-1,1 -1,-1,-1'
-		dest_id = resolve_direction( source_id, direction )
-		self.assertEqual( dest_id, '111 101 000' )
+	def test_follow_direction_positive( self ):
+		source_id = '001 011 111'
+		direction = '1,1,1'
+		dest_id, remaining_dir = resolve_direction( source_id, direction )
+		self.assertEqual( dest_id, '010 100 000' )
+		self.assertEqual( remaining_dir, '0,0,1' )
+
+
+	def test_follow_direction_negative( self ):
+		source_id = '110 100 000'
+		direction = '-1,-1,-1'
+		dest_id, remaining_dir = resolve_direction( source_id, direction )
+		self.assertEqual( dest_id, '101 011 111' )
+		self.assertEqual( remaining_dir, '0,0,-1' )
 
 
 	def test_siblings_parent( self ):
@@ -254,9 +270,7 @@ class TestOctree( unittest.TestCase ):
 
 		# for deeper levels
 		poll_id = '000 111' # = {( 1, 1, 1)}
-		neighbors = octree.neighbor_ids( poll_id )
-
-		pass
+		neighbor_ids = octree.neighbor_ids( poll_id )
 
 
 if __name__ == '__main__':
