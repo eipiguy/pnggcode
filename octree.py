@@ -105,10 +105,10 @@ class Octree:
 				cur_id += coords
 				cur_cell = cur_cell.octants[coords]
 			else:
-				print(f"Could not find cell '{cell_id}'")
-				print(f"Error at '{cur_id}' finding '{coords}'")
-				print(f"Returning '{cur_id}'")
-				break
+				print(f"Cell '{cell_id}' does not exist!")
+				print(f"Could not find '{coords}' at '{cur_id}'.")
+				print(f"Returning...")
+				return
 		return cur_cell
 
 
@@ -129,16 +129,35 @@ class Octree:
 
 		# Point one cell at the same level
 		# in each of the 9 directions
-		neighbors = []
-		neighbor_directions = cube_directions()
+		ids = []
+		directions = cube_directions()
 
 		# resolve each neighbor direction
-		for direction in neighbor_directions:
+		for direction in directions:
 			neighbor_id, remainder = resolve_direction( cell_id, direction )
-			neighbors.append( [ neighbor_id, remainder ] )
+			ids.append( [ neighbor_id, remainder ] )
 		
-		return neighbors
+		return ids
 
+
+	def neighbors( self, cell_id ):
+
+		# Point one cell at the same level
+		# in each of the 9 directions
+		ids = []
+		neighbors = []
+		directions = cube_directions()
+
+		# resolve each neighbor direction
+		for direction in directions:
+			neighbor_id, remainder = resolve_direction( cell_id, direction )
+			ids.append( [ neighbor_id, remainder ] )
+			neighbor = self.get_cell( neighbor_id )
+			if neighbor != None:
+				neighbors.append( neighbor )
+				neighbor = None
+
+		return neighbors
 
 # def id_direction( source_id, dest_id ):
 # 

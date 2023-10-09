@@ -234,7 +234,7 @@ class TestOctree( unittest.TestCase ):
 		self.assertEqual( len(siblings), 1 )
 
 
-	def test_neighbors( self ):
+	def test_neighbor_ids( self ):
 		octree = Octree(
 			[
 				(0, 0, 0),
@@ -271,6 +271,48 @@ class TestOctree( unittest.TestCase ):
 		# for deeper levels
 		poll_id = '000 111' # = {( 1, 1, 1)}
 		neighbor_ids = octree.neighbor_ids( poll_id )
+		self.assertEqual( len(neighbor_ids), 26 )
+		self.assertNotIn( '000 111', neighbor_ids )
+
+
+	def test_neighbors( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+		
+
+		# Without being on a boundary,
+		# there should be a 3x3x3 cube
+		# of neighbor cells minus the center,
+		# thus (9*3)-1 = 26 neighbors
+
+		# 000 ->
+		# at initial levels,
+		# you are always on a boundary
+		# so children just return siblings
+
+		# for deeper levels
+		poll_id = '000 111' # = {( 1, 1, 1)}
+		neighbors = octree.neighbors( poll_id )
+		self.assertEqual( len(neighbors), 8 )
 
 
 if __name__ == '__main__':
