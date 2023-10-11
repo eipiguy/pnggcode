@@ -129,7 +129,7 @@ class TestOctree( unittest.TestCase ):
 				(1, 1, 1)
 			]
 		)
-		roll = octree.roll_call()
+		roll = octree.subtree_census()
 		self.assertEqual( roll['000'], {(0, 0, 0)} )
 		self.assertEqual( roll['001'], {(0, 0, 1)} )
 		self.assertEqual( roll['010'], {(0, 1, 0)} )
@@ -256,7 +256,6 @@ class TestOctree( unittest.TestCase ):
 				(2, 2, 2),
 			]
 		)
-		
 
 		# Without being on a boundary,
 		# there should be a 3x3x3 cube
@@ -313,6 +312,86 @@ class TestOctree( unittest.TestCase ):
 		poll_id = '000 111' # = {( 1, 1, 1)}
 		neighbors = octree.neighbors( poll_id )
 		self.assertEqual( len(neighbors), 8 )
+
+
+	def test_neighbor_points( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+
+		poll_id = '000 111'
+		neighbor_points = octree.neighbor_points( poll_id )
+		self.assertEqual( len( neighbor_points ), 8 )
+
+
+	def test_neighborhood_patches( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+
+		patches = octree.neighborhood_patches()
+		pass
+
+
+	def test_nearest_points( self ):
+		octree = Octree(
+			[
+				(0, 0, 0),
+				(0, 0, 3),
+				(0, 3, 0),
+				(0, 3, 3),
+				(3, 0, 0),
+				(3, 0, 3),
+				(3, 3, 0),
+				(3, 3, 3),
+
+				(1, 1, 1),
+				(1, 1, 2),
+				(1, 2, 1),
+				(1, 2, 2),
+				(2, 1, 1),
+				(2, 1, 2),
+				(2, 2, 1),
+				(2, 2, 2),
+			]
+		)
+		pass
 
 
 if __name__ == '__main__':

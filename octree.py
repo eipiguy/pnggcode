@@ -81,19 +81,43 @@ class Octree:
 		return id
 
 
-	def roll_call( self ):
-		members = {
-			self.id: self.points
-		}
-
+	def subtree_census( self ):
+		members = { self.id: self.points }
 		if hasattr( self, 'octants' ):
 			for corner_id in self.octants:
 				corner = self.octants[corner_id]
-				child_roll = corner.roll_call()
-				for id in child_roll:
-					members[id] = child_roll[id]
-
+				child_members = corner.subtree_census()
+				for id in child_members:
+					members[id] = child_members[id]
 		return members
+
+
+	def group_census( self, group_size = 2 ):
+		ids_to_points = {}
+		if hasattr( self, 'octants' ):
+			if len(self.points) > group_size:
+				for corner_id in self.octants:
+					corner = self.octants[corner_id]
+					id_pt = corner.group_census( group_size )
+					ids_to_points |= id_pt
+			else:
+				ids_to_points = { self.id: self.points }
+
+		return ids_to_points
+
+
+	def census( self ):
+		id_to_point = {}
+		if hasattr( self, 'octants' ):
+			for corner_id in self.octants:
+				corner = self.octants[corner_id]
+
+				id_pt = corner.census()
+				id_to_point |= id_pt
+		else:
+			id_to_point[self.id] = list(self.points)[0]
+
+		return id_to_point
 
 
 	def get_cell( self, cell_id ):
@@ -144,20 +168,43 @@ class Octree:
 
 		# Point one cell at the same level
 		# in each of the 9 directions
-		ids = []
+		ids = self.neighbor_ids( cell_id )
 		neighbors = []
-		directions = cube_directions()
 
 		# resolve each neighbor direction
-		for direction in directions:
-			neighbor_id, remainder = resolve_direction( cell_id, direction )
-			ids.append( [ neighbor_id, remainder ] )
-			neighbor = self.get_cell( neighbor_id )
+		for neighbor_id in ids:
+			neighbor = self.get_cell( neighbor_id[0] )
 			if neighbor != None:
 				neighbors.append( neighbor )
 				neighbor = None
 
 		return neighbors
+
+
+	def neighbor_points( self, cell_id ):
+		neighbors = self.neighbors( cell_id )
+		neighbor_points = []
+		
+		for neighbor in neighbors:
+			neighbor_points.extend( list(neighbor.points) )
+		
+		return neighbor_points
+
+
+	def neighborhood_patches( self ):
+		# at finest grained levels,
+		# take all occupied cells,
+		# find their neighbor cells
+		# and add to a local patch
+
+		cells = self.group_census()
+		pass
+
+
+	def nearest_points( self ):
+		# get neighborhood patches
+		patches = self.neighborhood_patches()
+
 
 # def id_direction( source_id, dest_id ):
 # 
