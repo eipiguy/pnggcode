@@ -61,27 +61,16 @@ class TestOctree( unittest.TestCase ):
 				(1, 1, 1)
 			]
 		)
-		self.assertEqual( octree.octants['000'].points, { (0, 0, 0) } )
+
+		# border point determined by get_split_id
+		self.assertEqual( octree.octants['000'].points, { (0, 0, 0), (1, 1, 1) } )
 		self.assertEqual( octree.octants['001'].points, { (0, 0, 2) } )
 		self.assertEqual( octree.octants['010'].points, { (0, 2, 0) } )
 		self.assertEqual( octree.octants['011'].points, { (0, 2, 2) } )
 		self.assertEqual( octree.octants['100'].points, { (2, 0, 0) } )
 		self.assertEqual( octree.octants['101'].points, { (2, 0, 2) } )
 		self.assertEqual( octree.octants['110'].points, { (2, 2, 0) } )
-
-		# border point always to far corner
-		# this is determined by get_split_id
-		self.assertEqual(
-			octree.octants['111'].points,
-			{(1, 1, 1), (2, 2, 2)}
-		)
-		
-		# # the only reasonable alternative is
-		# # to put border points in the near corner
-		# self.assertEqual(
-		# 	octree.octants['000'].points,
-		# 	{(0, 0, 0), (1, 1, 1)}
-		# )
+		self.assertEqual( octree.octants['111'].points, {(2, 2, 2)} )
 
 
 	def test_octant_nesting( self ):
