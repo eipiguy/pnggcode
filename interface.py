@@ -3,8 +3,9 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 import sys
 from os import path
+from PIL import Image
 
-from color import *
+from color_tree import TreeModel
 
 
 class InterfaceView( QWidget ):
@@ -64,38 +65,43 @@ class ImagePresenter:
 		self.view.button.clicked.connect( self.load_image )
 
 
-	def model_updated(self):
+	def model_updated( self ):
 		# Update view based on model changes.
-		self.set_tree_view( self.model.color_tree )
+		self.view.tree_view.setModel( self.model.tree_model )
 
 
-	def load_image(self):
+	def load_image( self ):
 		options = QFileDialog.Options()
 		image_path, _ = QFileDialog.getOpenFileName(
 			self.view,
 			"QFileDialog.getOpenFileName()",
 			"",
 			"PNG Files (*.png);;All Files (*)",
-			options=options )
+			options = options )
 		self.model.image = self.view.set_image( image_path )
 		self.model.process_image( image_path )
 
 
-	def set_tree_view( self, color_tree ):
-		tree_view = self.view.tree
-
-
 class InterfaceModel( QAbstractItemModel ):
 	def __init__( self ):
+		super( QAbstractItemModel, self ).__init__()
 		self.observers = []
 
+	def register_observer( self, new_observer ):
+		self.observers.append( new_observer )
+
+	def notify_observers( self ):
+		for observer in self.observers:
+			observer.model_updated()
 
 	def process_image( self, path ):
-		self.colors = get_colors( path )
-		self.color_tree = ColorTree( self.colors )
+		image = Image.open( path )
+		if image.mode != 'P':
+			image = image.convert('P', palette=Image.ADAPTIVE)
+		self.image = image
+		self.colors = image.palette.colors
 
-		## Move the tree information over
-		self.tree_model = TreeModel( self.color_tree )
+		self.tree_model = TreeModel( self.colors )
 		self.notify_observers()
 
 

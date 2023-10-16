@@ -380,6 +380,7 @@ class TestOctree( unittest.TestCase ):
 				(2, 2, 2),
 			]
 		)
+		pair_list, distances = octree.nearest_points()
 		pass
 
 

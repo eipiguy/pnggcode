@@ -1,25 +1,29 @@
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
+from PyQt5.QtGui import QBrush, QColor
 
 from octree import Octree
 
 
 class TreeNode:
 	def __init__(self, data, parent=None):
-		self.data = data
 		self.parent = parent
 		self.children = []
+		self.bind_octree( data )
+
+	def bind_octree( self, octree ):
+		self.data = octree
+		if hasattr( octree, 'octants' ):
+			for corner_id in octree.octants:
+				corner = octree.octants[corner_id]
+				child_node = TreeNode( corner, self )
+				self.children.append( child_node )
 
 
 class TreeModel( QAbstractItemModel ):
 	def __init__( self, color_set ):
 		super( TreeModel, self ).__init__()
-		self.root = self.populate_nodes( color_set )
-
-
-	def populate_nodes( self, color_set ):
 		self.color_octree = Octree( color_set )
-		print()
-		pass
+		self.root = TreeNode( self.color_octree )
 
 
 	def index( self, row, column, parent = QModelIndex() ):
@@ -27,7 +31,7 @@ class TreeModel( QAbstractItemModel ):
 		if not parent.isValid():
 			return self.createIndex( row, column, self.root.children[row] )
 
-		# otherwise return the specified child of the parent
+		# otherwise return the specified index of the child
 		parent_node = parent.internalPointer()
 		return self.createIndex( row, column, parent_node.children[row] )
 
@@ -44,7 +48,7 @@ class TreeModel( QAbstractItemModel ):
 
 		# return the default (root?) index
 		# if the parent is the root node
-		if parent_node == self.root:
+		if parent_node is self.root:
 			return QModelIndex()
 
 		# otherwise we need to make an index
@@ -78,6 +82,16 @@ class TreeModel( QAbstractItemModel ):
 		if not index.isValid():
 			return None
 
-		node = index.internalPointer()
 		if role == Qt.DisplayRole:
-			return node.data
+			tree_node = index.internalPointer()
+			return str(tree_node.data.points)
+
+		if role == Qt.BackgroundRole:
+			tree_node = index.internalPointer()
+
+			# Assuming tree_node.data.points
+			# is a set of tuples like (R, G, B)
+			color_tuple = list(tree_node.data.points)[0]
+			return QBrush(QColor(*color_tuple))
+
+		return None

@@ -118,6 +118,14 @@ def component_vals( points ):
 	return vals
 
 
+def vals_to_points( val_lists ):
+	points = []
+	x_vals = val_lists[0]
+	for i,val in enumerate(x_vals):
+		points.append( [ vals[i] for vals in val_lists ] )
+	return points
+
+
 def median_vals( points ):
 	vals = component_vals( points )
 	num_points = len(vals[0])
@@ -133,6 +141,33 @@ def median_vals( points ):
 		component_medians.append( median )
 
 	return component_medians
+
+
+def point_deltas( points ):
+	if len(points) <= 1:
+		return None
+
+	deltas = []
+	for i,point in enumerate(points):
+		for compare_pt in points[i+1:]:
+			cur_deltas = [ abs( xj - compare_pt[j] ) for j,xj in enumerate(point) ]
+			deltas.append( sum( cur_deltas ) )
+
+	return deltas
+
+
+def val_deltas( vals ):
+	if len(vals) < 1:
+		return None
+
+	deltas = []
+	last_val = vals[0]
+	for cur_val in vals[1:]:
+		split_val = cur_val - last_val
+		deltas.append( split_val )
+		last_val = cur_val
+
+	return deltas
 
 
 def largest_split( vals ):
@@ -157,7 +192,9 @@ def largest_split( vals ):
 			split_vals = [ split_val ]
 		last_val = cur_val
 
-	median_split = split_vals[ len(split_vals) // 2 ]
+	median_split = vals[0]
+	if len(split_vals) > 0:
+		median_split = split_vals[ len(split_vals) // 2 ]
 	return median_split
 
 
@@ -187,15 +224,15 @@ class Octree:
 
 	def sort_into_octants( self, points ):
 		octant_points = {
-				'000': [],
-				'001': [],
-				'010': [],
-				'011': [],
-				'100': [],
-				'101': [],
-				'110': [],
-				'111': []
-			}
+			'000': [],
+			'001': [],
+			'010': [],
+			'011': [],
+			'100': [],
+			'101': [],
+			'110': [],
+			'111': []
+		}
 		self.split_point = get_split_pt( points )
 		for pt in self.points:
 			octant_points[ self.get_split_id(pt) ].append( pt )
@@ -351,8 +388,13 @@ class Octree:
 	def nearest_points( self ):
 		# get neighborhood patches
 		cells = self.group_census( 2 )
-		distances = []
+
+		# get distances in each patch and sort
+		distances = {}
 		for id in cells:
 			points = list(cells[id])
-			distances.append( sum[  ] )
+			distances[ id ] = point_deltas( points )
+		distances = sorted( distances, key = lambda x:x[1] )
+
+		return
 
