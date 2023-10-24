@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 from PyQt5.QtGui import QBrush, QColor
 
-from octree import Octree
+from octree import Octree, component_vals
 
 
 class TreeNode:
@@ -17,6 +17,12 @@ class TreeNode:
 				corner = octree.octants[corner_id]
 				child_node = TreeNode( corner, self )
 				self.children.append( child_node )
+
+	def color_average( self ):
+		vals = component_vals( self.data.points )
+		avg_vals = [ int(sum( comp_vals ) / len(comp_vals)) for comp_vals in vals ]
+		self.average_color = tuple(avg_vals)
+		return self.average_color
 
 
 class TreeModel( QAbstractItemModel ):
@@ -78,7 +84,7 @@ class TreeModel( QAbstractItemModel ):
 		return 1
 
 
-	def data(self, index, role=Qt.DisplayRole):
+	def data( self, index, role=Qt.DisplayRole ):
 		if not index.isValid():
 			return None
 

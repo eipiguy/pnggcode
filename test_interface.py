@@ -93,7 +93,7 @@ class TestInterfaceModel( unittest.TestCase ) :
 		model.register_observer( observer1 )
 		model.register_observer( observer2 )
 
-		model.notify_observers()
+		model.notify_model_update()
 		observer1.model_updated.assert_called_once()
 		observer2.model_updated.assert_called_once()
 

@@ -1,5 +1,23 @@
 # PNG-GCode Log
 
+## 2023-10-24
+
+Holy crap, I think I got it working! Not the true "closest color tree", but with the initial octree sort it works great!
+
+## 2023-10-17
+
+Huzzah! I got something mildly usable this weekend! It sorts an image into an octree, and it works in short enough time to manage the large color palette from midjourney images and so on.
+
+But it is the octree content that is being displayed, not the nearest neighbor groups we hope to achieve. We want a binary tree that peels off the furthest color from the pack, or joins the closest 2. The first from a top down perspective, the latter from a bottom up.
+
+Now that the octree has been parsed though, this makes the agglomeration search for nearest neighbors go much faster.
+
+The next steps are working on documentation for how to install and run. What a user might expect, and how to operate the software.
+
+From there, I'll focus on developer side. Once there's a clear picture of what user might expect, then the design requirements on the development side will become more clear.
+
+I need to make a task list system that operates like a kanban board. I think this can be something text-based pretty easily.
+
 ## 2023-10-02
 
 I can't seem to let this octree thing go. I have an idea where you have multiple copies for the points near the divides. One for each neighboring octant. That way you can always be assured that all points within the whole space are part of at least one neighborhood containing their nearest neighbor.
