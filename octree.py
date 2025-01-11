@@ -217,7 +217,7 @@ class Octree:
 			return
 
 		# if more than the minimum granularity,
-		# split into eight children and sort
+		# split into eight "children" octants and sort
 		octant_points = self.sort_into_octants( self.points )
 		self.initialize_octant_trees( octant_points )
 

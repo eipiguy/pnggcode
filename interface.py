@@ -138,7 +138,7 @@ class InterfaceModel( QAbstractItemModel ):
 		self.colors = palette_image.palette.colors
 
 		# The tree is a way of indexing the palette
-		self.tree_model = TreeModel( self.colors )
+		self.tree_model = TreeModel( palette_image )
 		self.notify_model_update()
 
 
@@ -171,39 +171,24 @@ class InterfaceModel( QAbstractItemModel ):
 	def node_collapsed( self, qt_index ):
 		node = qt_index.internalPointer()
 
-		# check the sub-colors in that node
-		collapsed_colors = node.data.points
-
-		# find the "parent color" to replace with
-		if hasattr( node, 'average_color' ):
-			replacement_color = node.average_color
-		else:
-			replacement_color = node.color_average()
-
-		# for every collapsed color in the grid
-		# get the associated locations for a mask
-		mask_locations = self.get_color_locations( collapsed_colors )
-
-		# add the parent color to the mask
-		mask, undo_mask = self.make_mask( mask_locations, replacement_color )
-
-		# set the expansion mask for the node,
-		# allows reversal of the collapse mask
-		node.expand_mask = undo_mask
-
-		# mask the currently displayed image
-		composite = Image.alpha_composite( self.display, mask )
-		self.display = composite
+		# mask replaces group colors with average
+		# for the currently displayed image
+		self.display = Image.alpha_composite( self.display, node.mask )
+		node.is_collapsed = True
 
 		# tell observers
-		self.notify_display_update( composite )
+		self.notify_display_update( self.display )
 
 
 	def node_expanded( self, qt_index ):
 		node = qt_index.internalPointer()
-		if hasattr( node, 'expand_mask' ):
-			self.display = Image.alpha_composite( self.display, node.expand_mask )
-			self.notify_display_update( self.display )
+
+		# undo mask replaces a average color with
+		# average or group, based on children
+		self.display = Image.alpha_composite( self.display, node.undo_mask )
+		node.is_collapsed = False
+
+		self.notify_display_update( self.display )
 
 
 if __name__ == "__main__":
